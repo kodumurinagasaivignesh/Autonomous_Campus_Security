@@ -10,38 +10,40 @@ class SecurityAgent:
         campus,
         start_location="Main Gate",
         battery=100,
+        initial_charge=None,
         charging_station="Security Office",
     ):
         self.campus = campus
         self.current_location = start_location
 
-        # Battery management
+        # If no separate starting charge is provided,
+        # start with a fully charged battery.
+        if initial_charge is None:
+            initial_charge = battery
+
         self.battery_manager = BatteryManager(
             capacity=battery,
-            initial_charge=battery,
+            initial_charge=initial_charge,
             low_battery_threshold=20,
         )
 
-        # Keep battery as a simple number for compatibility
-        # with the utility-based patrol code.
-        self.battery = battery
+        # Keep the public battery value synchronized
+        # with the BatteryManager.
+        self.battery = initial_charge
 
         self.charging_station = charging_station
-
         self.patrol_history = [start_location]
         self.total_distance = 0
 
     def sync_battery(self):
-        """Synchronize the agent battery value with BatteryManager."""
+        """Synchronize the agent battery with BatteryManager."""
         self.battery = self.battery_manager.charge
 
     def move_to(self, destination):
-        """Move the agent to a connected destination."""
+        """Move the agent to a destination using the shortest path."""
 
         if destination not in self.campus.graph:
-            raise ValueError(
-                f"Unknown destination: {destination}"
-            )
+            raise ValueError(f"Unknown destination: {destination}")
 
         if destination == self.current_location:
             print("Agent is already at this location.")
@@ -64,7 +66,6 @@ class SecurityAgent:
             destination,
         )
 
-        # Consume battery
         self.battery_manager.consume(distance)
         self.sync_battery()
 
@@ -83,12 +84,14 @@ class SecurityAgent:
         return True
 
     def go_to_charging_station(self):
-        """Move to the charging station and recharge."""
+        """Move to the charging station and recharge the battery."""
 
         if self.current_location == self.charging_station:
             print("\n🔋 Agent is already at the charging station.")
+
             self.battery_manager.recharge()
             self.sync_battery()
+
             print(f"Battery recharged to {self.battery}.")
             return True
 
@@ -110,7 +113,7 @@ class SecurityAgent:
         return True
 
     def check_battery(self):
-        """Check whether the agent needs charging."""
+        """Check whether the battery is above the low-battery threshold."""
 
         self.sync_battery()
 
@@ -125,7 +128,9 @@ class SecurityAgent:
 
         print("\n--- Security Agent Status ---")
         print(f"Location: {self.current_location}")
-        print(f"Battery: {self.battery}/{self.battery_manager.capacity}")
+        print(
+            f"Battery: {self.battery}/{self.battery_manager.capacity}"
+        )
         print(f"Charging station: {self.charging_station}")
         print(f"Total distance: {self.total_distance}")
         print(f"Patrol history: {self.patrol_history}")
@@ -140,6 +145,7 @@ if __name__ == "__main__":
         campus=campus,
         start_location="Main Gate",
         battery=100,
+        initial_charge=100,
         charging_station="Security Office",
     )
 
@@ -152,8 +158,6 @@ if __name__ == "__main__":
 
     print("\nMoving to Hostel...")
     agent.move_to("Hostel")
-
-    agent.status()
 
     if not agent.check_battery():
         agent.go_to_charging_station()

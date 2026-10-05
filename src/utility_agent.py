@@ -6,11 +6,12 @@ from incidents import IncidentManager
 class UtilityBasedPatrolAgent(SecurityAgent):
     """Security agent that selects destinations using utility scores."""
 
-    def __init__(self, campus, start_location="Main Gate", battery=100):
+    def __init__(self, campus, start_location="Main Gate", battery=100,initial_charge=None):
         super().__init__(
             campus=campus,
             start_location=start_location,
             battery=battery,
+            initial_charge=initial_charge,
         )
 
         # Base security risk for each campus zone.
@@ -170,6 +171,8 @@ class UtilityBasedPatrolAgent(SecurityAgent):
 
     def patrol_once(self):
         """Perform one utility-based patrol decision."""
+        if not self.check_battery():
+          return self.go_to_charging_station()
 
         # Increase patrol step.
         self.patrol_step += 1
@@ -225,6 +228,7 @@ if __name__ == "__main__":
         campus=campus,
         start_location="Main Gate",
         battery=100,
+        initial_charge=15,
     )
 
     print("=== UTILITY-BASED PATROL WITH DYNAMIC COVERAGE ===")
