@@ -1,9 +1,10 @@
 from environment import CampusEnvironment
 from agent import SecurityAgent
+from incidents import IncidentManager
 
 
 class UtilityBasedPatrolAgent(SecurityAgent):
-    """Security agent that selects destinations using a utility score."""
+    """Security agent that selects destinations using utility scores."""
 
     def __init__(self, campus, start_location="Main Gate", battery=100):
         super().__init__(
@@ -12,8 +13,7 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             battery=battery,
         )
 
-        # Simulated security information for each campus zone.
-        # Higher values mean greater priority.
+        # Base security risk for each campus zone.
         self.incident_risk = {
             "Main Gate": 7,
             "Academic Block": 5,
@@ -26,7 +26,7 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             "Security Office": 2,
         }
 
-        # How much each zone needs to be visited.
+        # Higher value means the zone needs more patrol attention.
         self.coverage_need = {
             "Main Gate": 5,
             "Academic Block": 6,
@@ -39,14 +39,12 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             "Security Office": 2,
         }
 
-        # Simulated live alerts.
-        # 0 means no active alert.
+        # Live alert score for each location.
         self.live_alerts = {
             location: 0
             for location in self.campus.get_locations()
         }
 
-        # Weights determine how important each factor is.
         self.weights = {
             "risk": 0.35,
             "coverage": 0.25,
@@ -54,6 +52,25 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             "travel": 0.10,
             "battery": 0.05,
         }
+
+        # Incident manager.
+        self.incident_manager = IncidentManager(campus)
+
+    def update_alerts_from_incidents(self):
+        """Update live alert scores from active incidents."""
+
+        # Reset current alerts.
+        for location in self.live_alerts:
+            self.live_alerts[location] = 0
+
+        # Add priority values from active incidents.
+        active_incidents = self.incident_manager.get_active_incidents()
+
+        for incident in active_incidents:
+            self.live_alerts[incident.location] = max(
+                self.live_alerts[incident.location],
+                incident.priority,
+            )
 
     def calculate_utility(self, destination):
         """Calculate the utility score for a possible destination."""
@@ -67,10 +84,7 @@ class UtilityBasedPatrolAgent(SecurityAgent):
         coverage_score = self.coverage_need[destination]
         alert_score = self.live_alerts[destination]
 
-        # Higher distance means higher travel cost.
         travel_cost = distance
-
-        # Higher distance also consumes more battery.
         battery_cost = distance
 
         utility = (
@@ -84,7 +98,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
         return utility
 
     def choose_best_destination(self):
-        """Evaluate possible destinations and select the highest utility."""
+        """Evaluate destinations and select the highest utility."""
+
+        self.update_alerts_from_incidents()
 
         locations = self.campus.get_locations()
 
@@ -103,9 +119,10 @@ class UtilityBasedPatrolAgent(SecurityAgent):
                     location,
                 )
 
-                # Ignore destinations that cannot currently be reached.
                 if distance <= self.battery:
-                    utility_scores[location] = self.calculate_utility(location)
+                    utility_scores[location] = self.calculate_utility(
+                        location
+                    )
 
             except Exception:
                 continue
@@ -139,11 +156,21 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             key=lambda item: item[1],
             reverse=True,
         ):
-            print(f"{location}: {score:.2f}")
+            alert = self.live_alerts[location]
+
+            print(
+                f"{location}: {score:.2f} "
+                f"(Live Alert: {alert})"
+            )
 
         print(f"\nSelected destination: {destination}")
 
         return self.move_to(destination)
+
+    def display_incidents(self):
+        """Display currently active incidents."""
+
+        self.incident_manager.display_active_incidents()
 
 
 if __name__ == "__main__":
@@ -155,11 +182,29 @@ if __name__ == "__main__":
         battery=100,
     )
 
-    print("=== UTILITY-BASED PATROL SIMULATION ===")
+    print("=== UTILITY-BASED PATROL WITH LIVE INCIDENTS ===")
 
     agent.status()
 
-    for step in range(5):
+    # Create a simulated emergency.
+    agent.incident_manager.create_incident(
+        "Fire Alert",
+        "Canteen",
+        "Possible fire detected near the canteen.",
+    )
+
+    # Create another incident with lower priority.
+    agent.incident_manager.create_incident(
+        "Unauthorized Entry",
+        "Main Gate",
+        "Unauthorized person detected at the main entrance.",
+    )
+
+    agent.display_incidents()
+
+    print("\n=== AGENT RESPONSE ===")
+
+    for step in range(3):
         print(f"\n========== Patrol Step {step + 1} ==========")
 
         success = agent.patrol_once()
@@ -170,3 +215,4 @@ if __name__ == "__main__":
 
     print("\n=== FINAL AGENT STATUS ===")
     agent.status()
+    
