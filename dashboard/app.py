@@ -1,9 +1,10 @@
 import os
 import sys
-import random
 
 import streamlit as st
 import plotly.graph_objects as go
+import plotly.express as px
+import pandas as pd
 
 
 # ============================================================
@@ -16,7 +17,7 @@ PROJECT_ROOT = os.path.dirname(
 
 SRC_PATH = os.path.join(
     PROJECT_ROOT,
-    "src"
+    "src",
 )
 
 if SRC_PATH not in sys.path:
@@ -29,7 +30,6 @@ if SRC_PATH not in sys.path:
 
 from environment import CampusEnvironment
 from utility_agent import UtilityBasedPatrolAgent
-from incidents import IncidentManager
 
 
 # ============================================================
@@ -145,13 +145,14 @@ if st.sidebar.button(
 
 
 # ============================================================
-# METRICS
+# CURRENT SYSTEM METRICS
 # ============================================================
 
 col1, col2, col3, col4, col5 = st.columns(5)
 
 
 with col1:
+
     st.metric(
         "📍 Current Location",
         agent.current_location,
@@ -159,7 +160,10 @@ with col1:
 
 
 with col2:
-    battery_percentage = agent.battery_manager.get_percentage()
+
+    battery_percentage = (
+        agent.battery_manager.get_percentage()
+    )
 
     st.metric(
         "🔋 Battery",
@@ -168,6 +172,7 @@ with col2:
 
 
 with col3:
+
     st.metric(
         "📏 Distance",
         agent.total_distance,
@@ -175,6 +180,7 @@ with col3:
 
 
 with col4:
+
     st.metric(
         "🔄 Patrol Steps",
         agent.patrol_step,
@@ -218,7 +224,7 @@ positions = {
 }
 
 
-# Create graph edges.
+# Campus paths.
 
 edges = [
     ("Main Gate", "Academic Block"),
@@ -282,10 +288,7 @@ for location, (x, y) in positions.items():
 
     location_x.append(x)
     location_y.append(y)
-
-    location_text.append(
-        location
-    )
+    location_text.append(location)
 
 
 fig.add_trace(
@@ -365,6 +368,7 @@ st.plotly_chart(
 
 st.subheader("📍 Patrol History")
 
+
 if agent.patrol_history:
 
     history_text = " → ".join(
@@ -375,7 +379,7 @@ if agent.patrol_history:
 
 
 # ============================================================
-# ACTIVE INCIDENTS
+# ACTIVE SECURITY INCIDENTS
 # ============================================================
 
 st.subheader("🚨 Security Incidents")
@@ -403,15 +407,18 @@ else:
         "No active security incidents."
     )
 
+
 # ============================================================
 # INCIDENT RESPONSE METRICS
 # ============================================================
 
 st.subheader("⏱️ Incident Response Metrics")
 
+
 all_incidents = (
     agent.incident_manager.active_incidents
 )
+
 
 if all_incidents:
 
@@ -447,6 +454,7 @@ else:
         "No incidents have been recorded yet."
     )
 
+
 # ============================================================
 # CREATE TEST INCIDENT
 # ============================================================
@@ -473,10 +481,10 @@ incident_type = st.selectbox(
 
 if st.button(
     "🚨 Create Incident",
-    use_container_width=False,
 ):
 
     descriptions = {
+
         "Unauthorized Entry":
             "Unauthorized person detected.",
 
@@ -506,7 +514,7 @@ if st.button(
 
 
 # ============================================================
-# UTILITY SCORES
+# AI DECISION ANALYSIS
 # ============================================================
 
 st.subheader("🧠 AI Decision Analysis")
@@ -520,15 +528,18 @@ if st.session_state.last_scores:
         reverse=True,
     )
 
+
     score_names = [
         item[0]
         for item in sorted_scores
     ]
 
+
     score_values = [
         item[1]
         for item in sorted_scores
     ]
+
 
     score_fig = go.Figure(
         go.Bar(
@@ -542,27 +553,167 @@ if st.session_state.last_scores:
         )
     )
 
+
     score_fig.update_layout(
         height=400,
         xaxis_title="Campus Location",
         yaxis_title="Utility Score",
     )
 
+
     st.plotly_chart(
         score_fig,
         use_container_width=True,
     )
+
 
     st.info(
         f"Last selected destination: "
         f"**{st.session_state.last_destination}**"
     )
 
+
 else:
 
     st.info(
         "Run a patrol step to generate AI "
         "utility scores."
+    )
+
+
+# ============================================================
+# EXPLAINABLE AI DECISION
+# ============================================================
+
+st.subheader("💡 Why Did the AI Choose This Destination?")
+
+
+last_decision = getattr(
+    agent,
+    "last_decision",
+    {},
+)
+
+
+if last_decision:
+
+    selected_destination = last_decision.get(
+        "destination",
+        "Unknown",
+    )
+
+    utility_score = last_decision.get(
+        "utility_score",
+        0,
+    )
+
+    decision_factors = last_decision.get(
+        "factors",
+        {},
+    )
+
+    st.success(
+        f"**Selected destination:** "
+        f"{selected_destination}"
+    )
+
+    st.metric(
+        "Final Utility Score",
+        f"{utility_score:.2f}",
+    )
+
+    if decision_factors:
+
+        st.markdown("### Decision Factors")
+
+        factor_col1, factor_col2 = st.columns(2)
+
+        with factor_col1:
+
+            st.write(
+                f"**Risk Score:** "
+                f"{decision_factors.get('risk_score', 0)}"
+            )
+
+            st.write(
+                f"**Coverage Score:** "
+                f"{decision_factors.get('coverage_score', 0)}"
+            )
+
+            st.write(
+                f"**Alert Score:** "
+                f"{decision_factors.get('alert_score', 0)}"
+            )
+
+        with factor_col2:
+
+            st.write(
+                f"**Revisit Time:** "
+                f"{decision_factors.get('revisit_time', 0)}"
+            )
+
+            st.write(
+                f"**Travel Cost:** "
+                f"{decision_factors.get('travel_cost', 0)}"
+            )
+
+            st.write(
+                f"**Battery Cost:** "
+                f"{decision_factors.get('battery_cost', 0)}"
+            )
+
+    reasons = []
+
+    if decision_factors.get("alert_score", 0) > 0:
+        reasons.append(
+            "an active security alert is present"
+        )
+
+    if decision_factors.get("risk_score", 0) >= 7:
+        reasons.append(
+            "the area has high security risk"
+        )
+
+    if decision_factors.get("coverage_score", 0) >= 7:
+        reasons.append(
+            "the area requires greater patrol coverage"
+        )
+
+    if decision_factors.get("revisit_time", 0) >= 3:
+        reasons.append(
+            "the area has not been visited recently"
+        )
+
+    if decision_factors.get("travel_cost", 0) <= 3:
+        reasons.append(
+            "the destination is relatively close"
+        )
+
+    if decision_factors.get("battery_cost", 0) > 5:
+        reasons.append(
+            "the destination requires significant battery usage"
+        )
+
+    if reasons:
+
+        st.info(
+            "The AI selected this destination because "
+            + ", ".join(reasons)
+            + "."
+        )
+
+    else:
+
+        st.info(
+            "The destination achieved the highest "
+            "overall utility score among reachable locations."
+        )
+
+else:
+
+    st.info(
+        "Run a patrol step to generate an explainable "
+        "AI decision."
     )
 
 
@@ -614,16 +765,6 @@ with status_col2:
 
 
 # ============================================================
-# FOOTER
-# ============================================================
-
-st.divider()
-
-st.caption(
-    "Autonomous Patrol & Surveillance Agent "
-    "for Campus Security | AI Foundations Project"
-)
-# ============================================================
 # EXPERIMENTAL PERFORMANCE COMPARISON
 # ============================================================
 
@@ -631,11 +772,12 @@ st.divider()
 
 st.header("📊 Patrol Strategy Comparison")
 
+
 st.markdown(
     """
     This section compares the three patrol strategies
     using repeated experimental trials:
-    
+
     - Random Patrol
     - Fixed Route
     - Utility Based
@@ -652,8 +794,6 @@ results_file = os.path.join(
 
 if os.path.exists(results_file):
 
-    import pandas as pd
-
     results_df = pd.read_csv(
         results_file
     )
@@ -666,12 +806,14 @@ if os.path.exists(results_file):
     average_df = (
         results_df
         .groupby("Strategy")
-        .agg({
-            "Distance": "mean",
-            "Unique Areas": "mean",
-            "Total Visits": "mean",
-            "Final Battery": "mean",
-        })
+        .agg(
+            {
+                "Distance": "mean",
+                "Unique Areas": "mean",
+                "Total Visits": "mean",
+                "Final Battery": "mean",
+            }
+        )
         .reset_index()
     )
 
@@ -679,6 +821,7 @@ if os.path.exists(results_file):
     st.subheader(
         "📋 Average Performance"
     )
+
 
     st.dataframe(
         average_df,
@@ -695,6 +838,7 @@ if os.path.exists(results_file):
         "📏 Average Distance Travelled"
     )
 
+
     distance_fig = go.Figure(
         go.Bar(
             x=average_df["Strategy"],
@@ -707,11 +851,13 @@ if os.path.exists(results_file):
         )
     )
 
+
     distance_fig.update_layout(
         xaxis_title="Patrol Strategy",
         yaxis_title="Average Distance",
         height=400,
     )
+
 
     st.plotly_chart(
         distance_fig,
@@ -727,6 +873,7 @@ if os.path.exists(results_file):
         "🗺️ Average Unique Areas Covered"
     )
 
+
     coverage_fig = go.Figure(
         go.Bar(
             x=average_df["Strategy"],
@@ -739,11 +886,13 @@ if os.path.exists(results_file):
         )
     )
 
+
     coverage_fig.update_layout(
         xaxis_title="Patrol Strategy",
         yaxis_title="Average Unique Areas",
         height=400,
     )
+
 
     st.plotly_chart(
         coverage_fig,
@@ -759,6 +908,7 @@ if os.path.exists(results_file):
         "🔋 Average Final Battery"
     )
 
+
     battery_fig = go.Figure(
         go.Bar(
             x=average_df["Strategy"],
@@ -771,11 +921,13 @@ if os.path.exists(results_file):
         )
     )
 
+
     battery_fig.update_layout(
         xaxis_title="Patrol Strategy",
         yaxis_title="Average Final Battery",
         height=400,
     )
+
 
     st.plotly_chart(
         battery_fig,
@@ -791,18 +943,19 @@ if os.path.exists(results_file):
         "🔬 Experimental Interpretation"
     )
 
+
     st.info(
         """
         The comparison is based on repeated simulation trials.
-        
+
         **Random Patrol** provides a stochastic baseline.
-        
+
         **Fixed Route** provides a deterministic patrol baseline.
-        
+
         **Utility Based** dynamically selects destinations
         using security risk, coverage, live alerts, travel
         cost and battery constraints.
-        
+
         The results should be interpreted using multiple
         metrics rather than assuming that one strategy is
         universally superior.
@@ -815,11 +968,344 @@ else:
     st.warning(
         """
         Evaluation results have not been generated yet.
-        
+
         Run:
-        
+
         `python experiments/evaluate_patrol.py`
-        
+
         to generate the experimental results.
         """
     )
+
+
+# ============================================================
+# MULTI-AGENT PERFORMANCE ANALYSIS
+# ============================================================
+
+st.divider()
+
+st.header("👥 Multi-Agent Performance Analysis")
+
+
+multi_agent_results_file = os.path.join(
+    PROJECT_ROOT,
+    "results",
+    "multi_agent_results.csv",
+)
+
+
+if os.path.exists(multi_agent_results_file):
+
+    multi_agent_df = pd.read_csv(
+        multi_agent_results_file
+    )
+
+
+    # Convert CSV into dictionary
+    multi_agent_metrics = dict(
+        zip(
+            multi_agent_df["Metric"],
+            multi_agent_df["Average"],
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # KPI METRICS
+    # --------------------------------------------------------
+
+    col1, col2, col3 = st.columns(3)
+
+
+    with col1:
+
+        st.metric(
+            "🌐 Campus Coverage",
+            f"{float(
+                multi_agent_metrics.get(
+                    "Total Campus Coverage (%)",
+                    0,
+                )
+            ):.2f}%",
+        )
+
+
+    with col2:
+
+        st.metric(
+            "👤 Agent 1 Coverage",
+            f"{float(
+                multi_agent_metrics.get(
+                    "Agent 1 Territory Coverage (%)",
+                    0,
+                )
+            ):.2f}%",
+        )
+
+
+    with col3:
+
+        st.metric(
+            "👤 Agent 2 Coverage",
+            f"{float(
+                multi_agent_metrics.get(
+                    "Agent 2 Territory Coverage (%)",
+                    0,
+                )
+            ):.2f}%",
+        )
+
+
+    col4, col5, col6 = st.columns(3)
+
+
+    with col4:
+
+        st.metric(
+            "📏 Average Distance",
+            f"{float(
+                multi_agent_metrics.get(
+                    "Average Total Distance",
+                    0,
+                )
+            ):.2f}",
+        )
+
+
+    with col5:
+
+        st.metric(
+            "🔋 Average Battery",
+            f"{float(
+                multi_agent_metrics.get(
+                    "Average Battery Remaining",
+                    0,
+                )
+            ):.2f}",
+        )
+
+
+    with col6:
+
+        st.metric(
+            "🔄 Average Overlap",
+            f"{float(
+                multi_agent_metrics.get(
+                    "Average Overlap Count",
+                    0,
+                )
+            ):.2f}",
+        )
+
+
+    # --------------------------------------------------------
+    # TERRITORY COVERAGE
+    # --------------------------------------------------------
+
+    st.subheader("📊 Territory Coverage")
+
+
+    # IMPORTANT:
+    # coverage_data must be created BEFORE px.bar().
+
+    coverage_data = pd.DataFrame(
+        {
+            "Agent": [
+                "Agent 1",
+                "Agent 2",
+            ],
+            "Coverage (%)": [
+                float(
+                    multi_agent_metrics.get(
+                        "Agent 1 Territory Coverage (%)",
+                        0,
+                    )
+                ),
+                float(
+                    multi_agent_metrics.get(
+                        "Agent 2 Territory Coverage (%)",
+                        0,
+                    )
+                ),
+            ],
+        }
+    )
+
+
+    coverage_fig = px.bar(
+        coverage_data,
+        x="Agent",
+        y="Coverage (%)",
+        title="Agent Territory Coverage",
+        text="Coverage (%)",
+    )
+
+
+    coverage_fig.update_traces(
+        texttemplate="%{text:.2f}%",
+        textposition="outside",
+    )
+
+
+    coverage_fig.update_layout(
+        xaxis_title="Agent",
+        yaxis_title="Coverage (%)",
+        yaxis_range=[0, 100],
+        height=400,
+    )
+
+
+    st.plotly_chart(
+        coverage_fig,
+        use_container_width=True,
+    )
+
+
+    # --------------------------------------------------------
+    # SYSTEM PERFORMANCE
+    # --------------------------------------------------------
+
+    st.subheader("⚙️ System Performance")
+
+
+    performance_data = pd.DataFrame(
+        {
+            "Metric": [
+                "Campus Coverage (%)",
+                "Average Distance",
+                "Average Battery",
+                "Average Overlap",
+            ],
+            "Value": [
+                float(
+                    multi_agent_metrics.get(
+                        "Total Campus Coverage (%)",
+                        0,
+                    )
+                ),
+                float(
+                    multi_agent_metrics.get(
+                        "Average Total Distance",
+                        0,
+                    )
+                ),
+                float(
+                    multi_agent_metrics.get(
+                        "Average Battery Remaining",
+                        0,
+                    )
+                ),
+                float(
+                    multi_agent_metrics.get(
+                        "Average Overlap Count",
+                        0,
+                    )
+                ),
+            ],
+        }
+    )
+
+
+    performance_fig = px.bar(
+        performance_data,
+        x="Metric",
+        y="Value",
+        title="Multi-Agent System Performance",
+        text="Value",
+    )
+
+
+    performance_fig.update_traces(
+        texttemplate="%{text:.2f}",
+        textposition="outside",
+    )
+
+
+    performance_fig.update_layout(
+        xaxis_tickangle=-25,
+        height=450,
+    )
+
+
+    st.plotly_chart(
+        performance_fig,
+        use_container_width=True,
+    )
+
+
+    # --------------------------------------------------------
+    # MULTI-AGENT INTERPRETATION
+    # --------------------------------------------------------
+
+    st.subheader("🧠 Multi-Agent Interpretation")
+
+
+    campus_coverage = float(
+        multi_agent_metrics.get(
+            "Total Campus Coverage (%)",
+            0,
+        )
+    )
+
+
+    overlap = float(
+        multi_agent_metrics.get(
+            "Average Overlap Count",
+            0,
+        )
+    )
+
+
+    if campus_coverage >= 75:
+
+        st.success(
+            f"High campus coverage achieved: "
+            f"{campus_coverage:.2f}%."
+        )
+
+    else:
+
+        st.info(
+            f"Current campus coverage is "
+            f"{campus_coverage:.2f}%. "
+            f"Further patrol optimization could "
+            f"improve coverage."
+        )
+
+
+    if overlap == 0:
+
+        st.success(
+            "The coordinated agents produced "
+            "no overlapping visited locations "
+            "in the evaluated trials."
+        )
+
+    else:
+
+        st.warning(
+            f"The agents had an average overlap "
+            f"of {overlap:.2f} locations."
+        )
+
+
+else:
+
+    st.warning(
+        "Multi-agent evaluation results were not "
+        "found. Run "
+        "`python experiments/evaluate_multi_agent.py` "
+        "first."
+    )
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.divider()
+
+st.caption(
+    "Autonomous Patrol & Surveillance Agent "
+    "for Campus Security | AI Foundations Project"
+)
