@@ -21,9 +21,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             initial_charge=initial_charge,
         )
 
-        # ====================================================
+        # ========================================================
         # SECURITY RISK
-        # ====================================================
+        # ========================================================
 
         # Base security risk for each campus zone.
         self.incident_risk = {
@@ -38,9 +38,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             "Security Office": 2,
         }
 
-        # ====================================================
+        # ========================================================
         # PATROL STATE
-        # ====================================================
+        # ========================================================
 
         # Patrol step counter.
         self.patrol_step = 0
@@ -56,9 +56,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
         # The agent starts at the starting location.
         self.last_visited[start_location] = 0
 
-        # ====================================================
+        # ========================================================
         # LIVE ALERTS
-        # ====================================================
+        # ========================================================
 
         # Live alert score for each campus location.
         self.live_alerts = {
@@ -66,11 +66,16 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             for location in self.campus.get_locations()
         }
 
-        # ====================================================
+        # ========================================================
         # UTILITY FUNCTION
-        # ====================================================
+        # ========================================================
 
         # Utility function weights.
+        #
+        # Total = 1.00
+        #
+        # Alert has the highest weight because an active
+        # security incident should receive strong priority.
         self.weights = {
             "risk": 0.25,
             "coverage": 0.20,
@@ -79,9 +84,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             "battery": 0.05,
         }
 
-        # ====================================================
+        # ========================================================
         # EXPLAINABILITY
-        # ====================================================
+        # ========================================================
 
         self.explainer = DecisionExplainer(
             self.weights
@@ -92,17 +97,17 @@ class UtilityBasedPatrolAgent(SecurityAgent):
         # why the agent selected a destination.
         self.last_decision = {}
 
-        # ====================================================
+        # ========================================================
         # INCIDENT MANAGEMENT
-        # ====================================================
+        # ========================================================
 
         self.incident_manager = IncidentManager(
             campus
         )
 
-    # ========================================================
+    # ============================================================
     # INCIDENT / ALERT MANAGEMENT
-    # ========================================================
+    # ============================================================
 
     def update_alerts_from_incidents(self):
         """Update live alert scores from active incidents."""
@@ -113,8 +118,7 @@ class UtilityBasedPatrolAgent(SecurityAgent):
 
         # Get all active incidents.
         active_incidents = (
-            self.incident_manager
-            .get_active_incidents()
+            self.incident_manager.get_active_incidents()
         )
 
         # Apply the highest priority incident
@@ -125,9 +129,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
                 incident.priority,
             )
 
-    # ========================================================
+    # ============================================================
     # COVERAGE / REVISIT CALCULATION
-    # ========================================================
+    # ============================================================
 
     def calculate_revisit_time(self, location):
         """Calculate patrol steps since a location was last visited."""
@@ -141,9 +145,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
 
         return self.patrol_step - last_visit
 
-    # ========================================================
+    # ============================================================
     # UTILITY CALCULATION
-    # ========================================================
+    # ============================================================
 
     def calculate_utility(self, destination):
         """Calculate the utility score for a possible destination."""
@@ -194,9 +198,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
 
         return utility
 
-    # ========================================================
+    # ============================================================
     # DESTINATION SELECTION
-    # ========================================================
+    # ============================================================
 
     def choose_best_destination(self):
         """Evaluate reachable destinations and select the highest utility."""
@@ -241,8 +245,7 @@ class UtilityBasedPatrolAgent(SecurityAgent):
         if not utility_scores:
             return None, {}
 
-        # Select the destination with the highest
-        # utility score.
+        # Select the highest utility destination.
         best_destination = max(
             utility_scores,
             key=utility_scores.get,
@@ -253,29 +256,29 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             utility_scores,
         )
 
-    # ========================================================
+    # ============================================================
     # PATROL DECISION
-    # ========================================================
+    # ============================================================
 
     def patrol_once(self):
         """Perform one utility-based patrol decision."""
 
-        # ----------------------------------------------------
+        # --------------------------------------------------------
         # BATTERY CHECK
-        # ----------------------------------------------------
+        # --------------------------------------------------------
 
         if not self.check_battery():
             return self.go_to_charging_station()
 
-        # ----------------------------------------------------
+        # --------------------------------------------------------
         # INCREMENT PATROL STEP
-        # ----------------------------------------------------
+        # --------------------------------------------------------
 
         self.patrol_step += 1
 
-        # ----------------------------------------------------
+        # --------------------------------------------------------
         # SELECT DESTINATION
-        # ----------------------------------------------------
+        # --------------------------------------------------------
 
         destination, utility_scores = (
             self.choose_best_destination()
@@ -287,9 +290,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             )
             return False
 
-        # ----------------------------------------------------
+        # --------------------------------------------------------
         # DISPLAY DECISION
-        # ----------------------------------------------------
+        # --------------------------------------------------------
 
         print(
             "\n--- Utility-Based Patrol Decision ---"
@@ -335,9 +338,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             f"{destination}"
         )
 
-        # ----------------------------------------------------
+        # --------------------------------------------------------
         # CALCULATE DECISION FACTORS
-        # ----------------------------------------------------
+        # --------------------------------------------------------
 
         distance = self.campus.get_distance(
             self.current_location,
@@ -369,9 +372,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
         # Save battery level before movement.
         battery_before = self.battery
 
-        # ----------------------------------------------------
+        # --------------------------------------------------------
         # STORE AI DECISION
-        # ----------------------------------------------------
+        # --------------------------------------------------------
 
         self.last_decision = {
             "destination": destination,
@@ -390,9 +393,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             "utility_scores": utility_scores.copy(),
         }
 
-        # ----------------------------------------------------
+        # --------------------------------------------------------
         # EXPLAIN DECISION
-        # ----------------------------------------------------
+        # --------------------------------------------------------
 
         self.explainer.explain_decision(
             destination=destination,
@@ -407,34 +410,76 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             revisit_time=revisit_time,
         )
 
-        # ----------------------------------------------------
+        # --------------------------------------------------------
         # MOVE AGENT
-        # ----------------------------------------------------
+        # --------------------------------------------------------
 
         success = self.move_to(
             destination
         )
 
-        # ----------------------------------------------------
+        # --------------------------------------------------------
         # UPDATE PATROL HISTORY
-        # ----------------------------------------------------
+        # --------------------------------------------------------
 
         if success:
 
-            self.last_visited[
-                destination
-            ] = self.patrol_step
+            self.last_visited[destination] = (
+                self.patrol_step
+            )
 
-            # Save battery level after movement.
-            self.last_decision[
-                "battery_after"
-            ] = self.battery
+            # Store battery after movement.
+            self.last_decision["battery_after"] = (
+                self.battery
+            )
+
+            # ----------------------------------------------------
+            # AUTOMATIC INCIDENT RESPONSE
+            # ----------------------------------------------------
+
+            active_incidents = (
+                self.incident_manager
+                .get_active_incidents()
+            )
+
+            for incident in active_incidents:
+
+                if (
+                    incident.location
+                    == self.current_location
+                ):
+
+                    print(
+                        "\n🚨 INCIDENT LOCATION REACHED"
+                    )
+
+                    print(
+                        f"Incident: "
+                        f"{incident.incident_type}"
+                    )
+
+                    print(
+                        f"Location: "
+                        f"{incident.location}"
+                    )
+
+                    # Resolve the incident.
+                    self.incident_manager.resolve_incident(
+                        incident,
+                        current_step=self.patrol_step,
+                    )
+
+                    print(
+                        f"⏱️ Response time: "
+                        f"{incident.get_response_time()} "
+                        f"patrol steps"
+                    )
 
         return success
 
-    # ========================================================
+    # ============================================================
     # INCIDENT DISPLAY
-    # ========================================================
+    # ============================================================
 
     def display_incidents(self):
         """Display currently active incidents."""
@@ -442,9 +487,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
         self.incident_manager.display_active_incidents()
 
 
-# ============================================================
+# ================================================================
 # MAIN TEST
-# ============================================================
+# ================================================================
 
 if __name__ == "__main__":
 
@@ -465,25 +510,27 @@ if __name__ == "__main__":
     # Display initial agent status.
     agent.status()
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------
     # CREATE FIRE ALERT
-    # --------------------------------------------------------
+    # ------------------------------------------------------------
 
     agent.incident_manager.create_incident(
         "Fire Alert",
         "Canteen",
         "Possible fire detected near the canteen.",
+        detected_at_step=agent.patrol_step,
     )
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------------
     # CREATE UNAUTHORIZED ENTRY ALERT
-    # --------------------------------------------------------
+    # ------------------------------------------------------------
 
     agent.incident_manager.create_incident(
         "Unauthorized Entry",
         "Main Gate",
         "Unauthorized person detected "
         "at the main entrance.",
+        detected_at_step=agent.patrol_step,
     )
 
     # Display active incidents.

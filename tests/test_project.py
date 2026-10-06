@@ -345,4 +345,45 @@ def test_utility_agent_prioritizes_high_priority_alert():
     assert scores["Canteen"] == max(
         scores.values()
     )
+
+# ============================================================
+# INCIDENT RESPONSE METRIC TESTS
+# ============================================================
+
+def test_incident_records_detection_step():
+    campus = CampusEnvironment()
+
+    manager = IncidentManager(campus)
+
+    incident = manager.create_incident(
+        "Fire Alert",
+        "Canteen",
+        "Fire detected.",
+        detected_at_step=3,
+    )
+
+    assert incident.detected_at_step == 3
+    assert incident.resolved_at_step is None
+
+
+def test_incident_records_response_time():
+    campus = CampusEnvironment()
+
+    manager = IncidentManager(campus)
+
+    incident = manager.create_incident(
+        "Fire Alert",
+        "Canteen",
+        "Fire detected.",
+        detected_at_step=3,
+    )
+
+    manager.resolve_incident(
+        incident,
+        current_step=6,
+    )
+
+    assert incident.active is False
+    assert incident.resolved_at_step == 6
+    assert incident.get_response_time() == 3
     

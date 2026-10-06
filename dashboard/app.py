@@ -403,6 +403,49 @@ else:
         "No active security incidents."
     )
 
+# ============================================================
+# INCIDENT RESPONSE METRICS
+# ============================================================
+
+st.subheader("⏱️ Incident Response Metrics")
+
+all_incidents = (
+    agent.incident_manager.active_incidents
+)
+
+if all_incidents:
+
+    for incident in all_incidents:
+
+        response_time = (
+            incident.get_response_time()
+        )
+
+        if incident.active:
+
+            st.warning(
+                f"🚨 **{incident.incident_type}** — "
+                f"{incident.location}\n\n"
+                f"Status: Active\n"
+                f"Detected at patrol step: "
+                f"{incident.detected_at_step}"
+            )
+
+        else:
+
+            st.success(
+                f"✅ **{incident.incident_type}** — "
+                f"{incident.location}\n\n"
+                f"Status: Resolved\n"
+                f"Response time: "
+                f"{response_time} patrol steps"
+            )
+
+else:
+
+    st.info(
+        "No incidents have been recorded yet."
+    )
 
 # ============================================================
 # CREATE TEST INCIDENT
@@ -451,6 +494,7 @@ if st.button(
         incident_type,
         incident_location,
         descriptions[incident_type],
+        detected_at_step=agent.patrol_step,
     )
 
     st.success(
