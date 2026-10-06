@@ -2,14 +2,27 @@ import os
 import sys
 import random
 import io
+import csv
+
 from contextlib import redirect_stdout
 
-# Allow Python to import files from the src folder.
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC_PATH = os.path.join(PROJECT_ROOT, "src")
+
+# ============================================================
+# PROJECT PATH
+# ============================================================
+
+PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+)
+
+SRC_PATH = os.path.join(
+    PROJECT_ROOT,
+    "src"
+)
 
 if SRC_PATH not in sys.path:
     sys.path.insert(0, SRC_PATH)
+
 
 from environment import CampusEnvironment
 from random_patrol import RandomPatrolAgent
@@ -17,19 +30,38 @@ from fixed_patrol import FixedRoutePatrolAgent
 from utility_agent import UtilityBasedPatrolAgent
 
 
-# Number of trials for each patrol strategy.
-NUM_TRIALS = 10
+# ============================================================
+# EXPERIMENT SETTINGS
+# ============================================================
 
-# Number of patrol decisions in each trial.
+NUM_TRIALS = 10
 PATROL_STEPS = 10
 
+RESULTS_DIR = os.path.join(
+    PROJECT_ROOT,
+    "results"
+)
+
+RESULTS_FILE = os.path.join(
+    RESULTS_DIR,
+    "patrol_results.csv"
+)
+
+
+# ============================================================
+# METRICS
+# ============================================================
 
 def calculate_metrics(agent):
-    """Calculate performance metrics for a completed patrol."""
+    """Calculate performance metrics for one patrol run."""
 
-    unique_areas = len(set(agent.patrol_history))
+    unique_areas = len(
+        set(agent.patrol_history)
+    )
 
-    total_visits = len(agent.patrol_history) - 1
+    total_visits = (
+        len(agent.patrol_history) - 1
+    )
 
     return {
         "distance": agent.total_distance,
@@ -38,6 +70,10 @@ def calculate_metrics(agent):
         "final_battery": agent.battery,
     }
 
+
+# ============================================================
+# RANDOM PATROL
+# ============================================================
 
 def run_random_patrol(seed):
     """Run one random patrol experiment."""
@@ -53,6 +89,7 @@ def run_random_patrol(seed):
     )
 
     for _ in range(PATROL_STEPS):
+
         success = agent.patrol_once()
 
         if not success:
@@ -60,6 +97,10 @@ def run_random_patrol(seed):
 
     return calculate_metrics(agent)
 
+
+# ============================================================
+# FIXED ROUTE
+# ============================================================
 
 def run_fixed_patrol():
     """Run one fixed-route patrol experiment."""
@@ -84,6 +125,7 @@ def run_fixed_patrol():
     )
 
     for _ in range(PATROL_STEPS):
+
         success = agent.patrol_once()
 
         if not success:
@@ -91,6 +133,10 @@ def run_fixed_patrol():
 
     return calculate_metrics(agent)
 
+
+# ============================================================
+# UTILITY-BASED PATROL
+# ============================================================
 
 def run_utility_patrol():
     """Run one utility-based patrol experiment."""
@@ -103,7 +149,7 @@ def run_utility_patrol():
         battery=100,
     )
 
-    # Add simulated live security incidents.
+    # Simulated security incidents.
     agent.incident_manager.create_incident(
         "Fire Alert",
         "Canteen",
@@ -117,6 +163,7 @@ def run_utility_patrol():
     )
 
     for _ in range(PATROL_STEPS):
+
         success = agent.patrol_once()
 
         if not success:
@@ -125,31 +172,120 @@ def run_utility_patrol():
     return calculate_metrics(agent)
 
 
+# ============================================================
+# AVERAGE RESULTS
+# ============================================================
+
 def average_results(results):
-    """Calculate average values across multiple trials."""
+    """Calculate average metrics across trials."""
 
     count = len(results)
 
     return {
-        "distance": sum(r["distance"] for r in results) / count,
-        "unique_areas": sum(r["unique_areas"] for r in results) / count,
-        "visits": sum(r["visits"] for r in results) / count,
-        "final_battery": sum(r["final_battery"] for r in results) / count,
+        "distance":
+            sum(
+                r["distance"]
+                for r in results
+            ) / count,
+
+        "unique_areas":
+            sum(
+                r["unique_areas"]
+                for r in results
+            ) / count,
+
+        "visits":
+            sum(
+                r["visits"]
+                for r in results
+            ) / count,
+
+        "final_battery":
+            sum(
+                r["final_battery"]
+                for r in results
+            ) / count,
     }
 
 
+# ============================================================
+# SAVE RESULTS
+# ============================================================
+
+def save_results(all_results):
+    """Save every trial result to CSV."""
+
+    os.makedirs(
+        RESULTS_DIR,
+        exist_ok=True,
+    )
+
+    with open(
+        RESULTS_FILE,
+        "w",
+        newline="",
+        encoding="utf-8",
+    ) as file:
+
+        writer = csv.writer(file)
+
+        writer.writerow([
+            "Strategy",
+            "Trial",
+            "Distance",
+            "Unique Areas",
+            "Total Visits",
+            "Final Battery",
+        ])
+
+        for strategy, results in all_results.items():
+
+            for index, result in enumerate(
+                results,
+                start=1,
+            ):
+
+                writer.writerow([
+                    strategy,
+                    index,
+                    result["distance"],
+                    result["unique_areas"],
+                    result["visits"],
+                    result["final_battery"],
+                ])
+
+    print(
+        f"\nResults saved to:"
+        f"\n{RESULTS_FILE}"
+    )
+
+
+# ============================================================
+# DISPLAY RESULTS
+# ============================================================
+
 def display_results(all_results):
-    """Display the final evaluation table."""
 
     print("\n")
+
     print("=" * 80)
-    print("MULTI-TRIAL PATROL STRATEGY EVALUATION")
+    print(
+        "MULTI-TRIAL PATROL STRATEGY EVALUATION"
+    )
     print("=" * 80)
 
-    print(f"\nNumber of trials per strategy: {NUM_TRIALS}")
-    print(f"Patrol steps per trial: {PATROL_STEPS}")
+    print(
+        f"\nNumber of trials per strategy: "
+        f"{NUM_TRIALS}"
+    )
+
+    print(
+        f"Patrol steps per trial: "
+        f"{PATROL_STEPS}"
+    )
 
     print("\nAverage Performance:")
+
     print("-" * 80)
 
     print(
@@ -176,29 +312,19 @@ def display_results(all_results):
 
     print("-" * 80)
 
-    print("\nIndividual Trial Results:")
-    print("-" * 80)
 
-    for strategy, results in all_results.items():
-
-        print(f"\n{strategy}")
-
-        for index, result in enumerate(results, start=1):
-
-            print(
-                f"Trial {index:02d}: "
-                f"Distance={result['distance']}, "
-                f"Unique Areas={result['unique_areas']}, "
-                f"Visits={result['visits']}, "
-                f"Battery={result['final_battery']}"
-            )
-
+# ============================================================
+# MAIN
+# ============================================================
 
 if __name__ == "__main__":
 
     print("=" * 80)
-    print("STARTING MULTI-TRIAL PATROL EVALUATION")
+    print(
+        "STARTING MULTI-TRIAL PATROL EVALUATION"
+    )
     print("=" * 80)
+
 
     all_results = {
         "Random Patrol": [],
@@ -206,64 +332,107 @@ if __name__ == "__main__":
         "Utility Based": [],
     }
 
-    # ---------------------------------------------------------
-    # RANDOM PATROL
-    # ---------------------------------------------------------
 
-    print("\nRunning Random Patrol trials...")
+    # --------------------------------------------------------
+    # RANDOM PATROL
+    # --------------------------------------------------------
+
+    print(
+        "\nRunning Random Patrol trials..."
+    )
 
     for trial in range(NUM_TRIALS):
 
         seed = 100 + trial
 
-        # Hide detailed patrol output.
         output = io.StringIO()
 
         with redirect_stdout(output):
-            result = run_random_patrol(seed)
 
-        all_results["Random Patrol"].append(result)
+            result = run_random_patrol(
+                seed
+            )
 
-    print("Random Patrol: 10 trials completed.")
+        all_results[
+            "Random Patrol"
+        ].append(result)
 
-    # ---------------------------------------------------------
+    print(
+        "Random Patrol: "
+        f"{NUM_TRIALS} trials completed."
+    )
+
+
+    # --------------------------------------------------------
     # FIXED ROUTE
-    # ---------------------------------------------------------
+    # --------------------------------------------------------
 
-    print("\nRunning Fixed Route trials...")
+    print(
+        "\nRunning Fixed Route trials..."
+    )
 
     for _ in range(NUM_TRIALS):
 
         output = io.StringIO()
 
         with redirect_stdout(output):
+
             result = run_fixed_patrol()
 
-        all_results["Fixed Route"].append(result)
+        all_results[
+            "Fixed Route"
+        ].append(result)
 
-    print("Fixed Route: 10 trials completed.")
+    print(
+        "Fixed Route: "
+        f"{NUM_TRIALS} trials completed."
+    )
 
-    # ---------------------------------------------------------
+
+    # --------------------------------------------------------
     # UTILITY BASED
-    # ---------------------------------------------------------
+    # --------------------------------------------------------
 
-    print("\nRunning Utility Based trials...")
+    print(
+        "\nRunning Utility Based trials..."
+    )
 
     for _ in range(NUM_TRIALS):
 
         output = io.StringIO()
 
         with redirect_stdout(output):
+
             result = run_utility_patrol()
 
-        all_results["Utility Based"].append(result)
+        all_results[
+            "Utility Based"
+        ].append(result)
 
-    print("Utility Based: 10 trials completed.")
+    print(
+        "Utility Based: "
+        f"{NUM_TRIALS} trials completed."
+    )
 
-    # ---------------------------------------------------------
-    # DISPLAY RESULTS
-    # ---------------------------------------------------------
 
-    display_results(all_results)
+    # --------------------------------------------------------
+    # DISPLAY
+    # --------------------------------------------------------
 
-    print("\nEvaluation completed successfully.")
+    display_results(
+        all_results
+    )
+
+
+    # --------------------------------------------------------
+    # SAVE CSV
+    # --------------------------------------------------------
+
+    save_results(
+        all_results
+    )
+
+
+    print(
+        "\nEvaluation completed successfully."
+    )

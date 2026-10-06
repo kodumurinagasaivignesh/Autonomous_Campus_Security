@@ -317,3 +317,32 @@ def test_utility_patrol_step():
     assert agent.current_location != initial_location
 
     assert agent.patrol_step == 1
+
+# ============================================================
+# INCIDENT RESPONSE TEST
+# ============================================================
+
+def test_utility_agent_prioritizes_high_priority_alert():
+    campus = CampusEnvironment()
+
+    agent = UtilityBasedPatrolAgent(
+        campus=campus,
+        start_location="Main Gate",
+        battery=100,
+    )
+
+    agent.incident_manager.create_incident(
+        "Fire Alert",
+        "Canteen",
+        "Fire detected near the canteen.",
+    )
+
+    destination, scores = (
+        agent.choose_best_destination()
+    )
+
+    assert destination == "Canteen"
+    assert scores["Canteen"] == max(
+        scores.values()
+    )
+    
