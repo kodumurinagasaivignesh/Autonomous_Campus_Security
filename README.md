@@ -494,12 +494,3 @@ Academic Session: 2026-27
 License
 This project is developed for academic and educational purposes.
 
-### ✅ After pasting
-
-Do **only these two things**:
-
-1. Press **`Ctrl + S`**
-2. Run:
-
-```powershell
-git diff --check
