@@ -1,12 +1,19 @@
 from environment import CampusEnvironment
 from agent import SecurityAgent
 from incidents import IncidentManager
+from explainability import DecisionExplainer
 
 
 class UtilityBasedPatrolAgent(SecurityAgent):
     """Security agent that selects destinations using utility scores."""
 
-    def __init__(self, campus, start_location="Main Gate", battery=100,initial_charge=None):
+    def __init__(
+        self,
+        campus,
+        start_location="Main Gate",
+        battery=100,
+        initial_charge=None,
+    ):
         super().__init__(
             campus=campus,
             start_location=start_location,
@@ -55,6 +62,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             "battery": 0.05,
         }
 
+        # Explainability component.
+        self.explainer = DecisionExplainer(self.weights)
+
         # Incident manager.
         self.incident_manager = IncidentManager(campus)
 
@@ -66,7 +76,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             self.live_alerts[location] = 0
 
         # Get all active incidents.
-        active_incidents = self.incident_manager.get_active_incidents()
+        active_incidents = (
+            self.incident_manager.get_active_incidents()
+        )
 
         # Apply the highest priority incident to each location.
         for incident in active_incidents:
@@ -100,7 +112,9 @@ class UtilityBasedPatrolAgent(SecurityAgent):
         risk_score = self.incident_risk[destination]
 
         # Dynamic coverage score based on revisit time.
-        revisit_time = self.calculate_revisit_time(destination)
+        revisit_time = self.calculate_revisit_time(
+            destination
+        )
 
         # Limit coverage score to a maximum of 10.
         coverage_score = min(revisit_time, 10)
@@ -147,11 +161,11 @@ class UtilityBasedPatrolAgent(SecurityAgent):
                     location,
                 )
 
-                # Only consider locations that the agent can reach
-                # with its current battery.
+                # Only consider locations reachable
+                # with the current battery.
                 if distance <= self.battery:
-                    utility_scores[location] = self.calculate_utility(
-                        location
+                    utility_scores[location] = (
+                        self.calculate_utility(location)
                     )
 
             except Exception:
@@ -171,13 +185,17 @@ class UtilityBasedPatrolAgent(SecurityAgent):
 
     def patrol_once(self):
         """Perform one utility-based patrol decision."""
+
+        # Check battery before making a patrol decision.
         if not self.check_battery():
-          return self.go_to_charging_station()
+            return self.go_to_charging_station()
 
         # Increase patrol step.
         self.patrol_step += 1
 
-        destination, utility_scores = self.choose_best_destination()
+        destination, utility_scores = (
+            self.choose_best_destination()
+        )
 
         if destination is None:
             print("No reachable destination available.")
@@ -196,7 +214,10 @@ class UtilityBasedPatrolAgent(SecurityAgent):
             reverse=True,
         ):
             alert = self.live_alerts[location]
-            revisit_time = self.calculate_revisit_time(location)
+
+            revisit_time = self.calculate_revisit_time(
+                location
+            )
 
             print(
                 f"{location}: {score:.2f} "
@@ -204,14 +225,49 @@ class UtilityBasedPatrolAgent(SecurityAgent):
                 f"Live Alert: {alert})"
             )
 
-        print(f"\nSelected destination: {destination}")
+        print(
+            f"\nSelected destination: {destination}"
+        )
+
+        # Calculate decision factors for explainability.
+        distance = self.campus.get_distance(
+            self.current_location,
+            destination,
+        )
+
+        risk_score = self.incident_risk[destination]
+
+        revisit_time = self.calculate_revisit_time(
+            destination
+        )
+
+        coverage_score = min(revisit_time, 10)
+
+        alert_score = self.live_alerts[destination]
+
+        travel_cost = distance
+        battery_cost = distance
+
+        # Explain why this destination was selected.
+        self.explainer.explain_decision(
+            destination=destination,
+            utility_score=utility_scores[destination],
+            risk_score=risk_score,
+            coverage_score=coverage_score,
+            alert_score=alert_score,
+            travel_cost=travel_cost,
+            battery_cost=battery_cost,
+            revisit_time=revisit_time,
+        )
 
         # Move the agent.
         success = self.move_to(destination)
 
         # If movement succeeded, remember the visit.
         if success:
-            self.last_visited[destination] = self.patrol_step
+            self.last_visited[destination] = (
+                self.patrol_step
+            )
 
         return success
 
@@ -222,6 +278,7 @@ class UtilityBasedPatrolAgent(SecurityAgent):
 
 
 if __name__ == "__main__":
+
     campus = CampusEnvironment()
 
     agent = UtilityBasedPatrolAgent(
@@ -231,7 +288,10 @@ if __name__ == "__main__":
         initial_charge=15,
     )
 
-    print("=== UTILITY-BASED PATROL WITH DYNAMIC COVERAGE ===")
+    print(
+        "=== UTILITY-BASED PATROL "
+        "WITH EXPLAINABILITY ==="
+    )
 
     # Display initial agent status.
     agent.status()
@@ -257,6 +317,7 @@ if __name__ == "__main__":
 
     # Run three patrol decisions.
     for step in range(3):
+
         print(
             f"\n========== Patrol Step {step + 1} =========="
         )
