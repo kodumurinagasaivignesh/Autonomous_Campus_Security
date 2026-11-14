@@ -1,0 +1,4 @@
+Strategy,Average_Distance,Average_Unique_Areas,Average_Total_Visits,Average_Final_Battery,Campus_Coverage_Percent
+Fixed Route,30.0,7.0,10.0,70.0,77.78
+Random Patrol,62.3,6.7,10.0,37.7,74.44
+Utility Based,50.0,6.0,10.0,50.0,66.67
