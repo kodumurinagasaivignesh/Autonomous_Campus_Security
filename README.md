@@ -1,729 +1,242 @@
-Autonomous Patrol & Surveillance Agent for Campus Security
+# Autonomous Campus Security Patrol System
 
-<p align="center">
-  <strong>An AI-powered autonomous campus security patrol simulation with intelligent decision-making, incident response, battery management, explainable AI, and multi-agent coordination.</strong>
-</p>
+An AI-based campus security project that simulates autonomous patrol agents moving around a university campus, monitoring security incidents and managing their battery.
 
-<p align="center">
-  <a href="https://autonomous-campus-security.onrender.com/">Live Dashboard</a> •
-  <a href="https://github.com/kodumurinagasaivignesh/Autonomous_Campus_Security">GitHub Repository</a>
-</p>
+The project compares different patrol strategies and also includes a two-agent system, where two security agents patrol separate campus areas.
 
-1. Project Overview
+**Live Dashboard:** https://autonomous-campus-security.onrender.com/
 
-The Autonomous Patrol & Surveillance Agent for Campus Security is an AI-based academic project that simulates autonomous security patrol operations in a university campus environment.
+**GitHub Repository:** https://github.com/kodumurinagasaivignesh/Autonomous_Campus_Security
 
-The system models a campus as a weighted graph and uses intelligent agents to select patrol destinations, monitor simulated security incidents, manage battery resources, and coordinate patrol activities.
+---
 
-It implements and compares three patrol strategies:
+## About the Project
 
-Random Patrol
+The main idea of this project is to simulate how autonomous agents can be used for campus security.
 
-Fixed Route Patrol
+We created a virtual campus using a graph, where each node represents a location and the edges represent paths between locations.
 
-Utility-Based Patrol
+The agents move around the campus, visit different locations, respond to simulated incidents and manage their battery.
 
-The project also introduces a two-agent patrol system in which agents operate in assigned campus territories to improve area coverage and reduce overlapping patrols.
+We implemented three different patrol strategies:
 
-An interactive Streamlit dashboard provides real-time visualization of the simulated environment, patrol activity, incidents, battery status, AI decisions, and experimental results.
+- **Random Patrol** – selects the next location randomly.
+- **Fixed Route Patrol** – follows a predefined route.
+- **Utility-Based Patrol** – selects a location based on risk, coverage, active alerts, travel cost and battery cost.
 
-2. Project Objectives
+We also implemented a multi-agent system with two agents starting from different locations.
 
-Develop a graph-based virtual campus environment.
+## Features
 
-Implement autonomous security patrol agents.
+- Campus environment with 9 locations.
+- Three different patrol strategies.
+- Utility-based decision-making.
+- Security incident simulation.
+- Battery consumption and charging.
+- Explainable AI to show why an agent selects a location.
+- Two-agent patrol with territory-based coordination.
+- Patrol performance evaluation.
+- Interactive Streamlit dashboard.
+- Automated testing using Pytest.
 
-Compare random, fixed-route, and utility-based strategies.
+## Campus Locations
 
-Simulate security incidents and incident response.
+The simulated campus contains these nine locations:
 
-Implement battery consumption and automatic charging.
+1. Main Gate
+2. Academic Block
+3. Library
+4. Hostel
+5. Canteen
+6. Parking
+7. Sports Ground
+8. Administration
+9. Security Office
 
-Explain the reasoning behind autonomous decisions.
+The campus is represented as a weighted graph using NetworkX. Shortest paths are used for agent movement.
 
-Develop a coordinated multi-agent patrol system.
+## How the Utility-Based Agent Works
 
-Evaluate patrol performance using repeated experiments.
+The utility-based agent calculates a score for possible destinations and selects the destination with the highest score.
 
-Build an interactive monitoring dashboard.
+The formula used in our implementation is:
 
-Validate system functionality through automated testing.
-
-3. System Architecture
-
-The system follows this general workflow:
-
-              Campus Environment
-                      |
-                      v
-             Autonomous Patrol Agent
-                      |
-                      v
-          Risk, Coverage and Live Alerts
-                      |
-                      v
-              Utility Calculation
-                      |
-                      v
-             Destination Selection
-                      |
-                      v
-                Patrol Movement
-                 /     |      \
-                /      |       \
-               v       v        v
-          Battery   Incident   Explainable
-          Manager   Response      AI
-                \      |       /
-                 \     |      /
-                      v
-              Performance Evaluation
-                      |
-                      v
-             Multi-Agent Coordination
-                      |
-                      v
-              Streamlit Dashboard
-
-Main components
-
-Component
-
-Responsibility
-
-Campus Environment
-
-Represents campus locations and paths as a weighted graph
-
-Patrol Agent
-
-Selects destinations and performs patrol movements
-
-Utility Agent
-
-Evaluates possible destinations using utility scores
-
-Incident Manager
-
-Creates and manages simulated security incidents
-
-Battery Manager
-
-Tracks battery consumption and charging
-
-Explainability Module
-
-Provides human-readable explanations for decisions
-
-Multi-Agent Module
-
-Coordinates two patrol agents
-
-Experiment Module
-
-Evaluates patrol strategies and calculates metrics
-
-Dashboard
-
-Visualizes system operations and results
-
-4. Campus Environment
-
-The campus is represented using a weighted graph implemented with NetworkX.
-
-The simulated environment contains nine locations:
-
-Main Gate
-
-Academic Block
-
-Library
-
-Hostel
-
-Canteen
-
-Parking
-
-Sports Ground
-
-Administration
-
-Security Office
-
-Graph edges represent connections between campus locations. Edge weights represent travel distance or movement cost.
-
-Shortest-path calculations are used to determine movement between locations.
-
-5. AI Decision-Making Approach
-
-The primary intelligent decision-making approach is Utility-Based Agent Design.
-
-Instead of following only a fixed route, the utility-based agent evaluates possible destinations using multiple factors and selects the destination with the highest utility score.
-
-Utility function
-
-The implemented utility function is:
-
-[
+\[
 U(d)=0.25R(d)+0.20C(d)+0.40A(d)-0.10T(d)-0.05B(d)
-]
+\]
 
 Where:
 
-Symbol
+| Factor | Meaning | Weight |
+|---|---|---:|
+| R(d) | Security Risk | 0.25 |
+| C(d) | Patrol Coverage | 0.20 |
+| A(d) | Live Alert Priority | 0.40 |
+| T(d) | Travel Cost | 0.10 |
+| B(d) | Battery Cost | 0.05 |
 
-Factor
+Risk, coverage and alerts increase the utility score. Travel cost and battery cost reduce it.
 
-Weight
+The agent uses these values to decide which location should be visited next.
 
-R(d)
+## Security Incidents
 
-Security Risk
+The project supports four types of simulated incidents:
 
-0.25
+- Unauthorized Entry
+- Suspicious Activity
+- Fire Alert
+- Emergency
 
-C(d)
+The system keeps track of incident locations, priorities, detection steps and resolution steps.
 
-Patrol Coverage
+When an incident is active, the utility-based agent considers its priority while selecting the next destination.
 
-0.20
+## Battery Management
 
-A(d)
+Battery management is included to make the patrol simulation more realistic.
 
-Live Alert Priority
+The system handles:
 
-0.40
+- Battery consumption during movement.
+- Low battery conditions.
+- Charging station navigation.
+- Automatic recharging.
+- Prevention of movements when the available battery is insufficient.
 
-T(d)
+## Multi-Agent Patrol
 
-Travel Cost
+Apart from the single-agent strategies, we implemented a two-agent patrol system.
 
-0.10
+| Agent | Starting Location |
+|---|---|
+| Agent 1 | Main Gate |
+| Agent 2 | Security Office |
 
-B(d)
+Each agent is assigned a territory and prioritizes locations in that area.
 
-Battery Cost
+The system records individual coverage, total campus coverage, patrol distance, battery remaining and overlapping locations.
 
-0.05
+## Dashboard
 
-The weights sum to 1.00.
+We developed the dashboard using Streamlit and Plotly.
 
-Positive factors increase destination utility, while travel and battery costs reduce it.
+It helps us monitor the simulation without having to check the Python output every time.
 
-The agent considers these factors to make context-aware patrol decisions rather than selecting destinations randomly or following only a predefined route.
+Some of the dashboard features are:
 
-Note: The utility factors use predefined scoring and cost values in the current simulation. The weights are configurable design parameters, not a claim of experimentally optimized weights.
+- Current agent location and movement.
+- Campus map and patrol path.
+- Battery status.
+- Active security incidents.
+- Utility-based decision explanations.
+- Patrol strategy comparison.
+- Multi-agent monitoring.
 
-6. Patrol Strategies
+**Dashboard:** https://autonomous-campus-security.onrender.com/
 
-Three patrol strategies are implemented and evaluated.
+### Screenshots
 
-6.1 Random Patrol
+**Dashboard**
 
-Selects patrol destinations randomly.
+![Dashboard](screenshots/dashboard.png)
 
-Provides a stochastic baseline.
+**Campus Map**
 
-Helps evaluate performance without intelligent destination prioritization.
+![Campus Map](screenshots/map.png)
 
-6.2 Fixed Route Patrol
+**Command Center**
 
-Follows a predefined sequence of campus locations.
+![Command Center](screenshots/commandcenter2.png)
 
-Provides a deterministic baseline.
+**Incident Center**
 
-Provides consistent patrol coverage under the configured route.
+![Incident Center](screenshots/incidentcenter.png)
 
-6.3 Utility-Based Patrol
+**Multi-Agent Command Center**
 
-Calculates destination utility scores.
+![Multi-Agent Command Center](screenshots/multiagent%20command%20centre.png)
 
-Considers security risk and patrol coverage.
+**Additional Dashboard Views**
 
-Prioritizes active security alerts.
+![Command Center View](screenshots/commandcenter1%20%283%29.png)
 
-Considers travel and battery costs.
+![Command Center View](screenshots/commandcenter1%20.png)
 
-Selects the highest-utility reachable destination.
+## Experimental Results
 
-7. Security Incident Management
+We evaluated the three patrol strategies using 10 trials, with 10 steps in each trial.
 
-The system supports four simulated security incident types:
+The following table shows the average results.
 
-Incident
+| Metric | Random Patrol | Fixed Route | Utility-Based |
+|---|---:|---:|---:|
+| Average Distance | 62.30 | 30.00 | 50.00 |
+| Unique Areas Visited | 6.70 | 7.00 | 6.00 |
+| Total Visits | 10.00 | 10.00 | 10.00 |
+| Final Battery | 37.70 | 70.00 | 50.00 |
+| Campus Coverage | 74.44% | 77.78% | 66.67% |
 
-Description
+Campus coverage is calculated using:
 
-Unauthorized Entry
+\[
+\text{Coverage}=\frac{\text{Unique Areas Visited}}{9}\times100
+\]
 
-Simulates unauthorized access to a campus location
+### Result Charts
 
-Suspicious Activity
+**Average Patrol Distance**
 
-Represents suspicious behavior requiring attention
+![Patrol Distance](docs/images/patrol_distance.png)
 
-Fire Alert
+**Unique Areas Visited**
 
-Simulates a fire-related emergency
+![Unique Areas](docs/images/unique_areas.png)
 
-Emergency
+**Final Battery**
 
-Represents a high-priority emergency situation
+![Final Battery](docs/images/final_battery.png)
 
-The incident management system records:
+### What We Observed
 
-Incident type
+- Fixed Route Patrol performed best in this experiment, with the lowest average distance of 30.00.
+- It also visited the highest number of unique areas and retained the most battery.
+- Utility-Based Patrol performed better than Random Patrol in average distance and remaining battery.
+- Random Patrol visited slightly more unique areas than Utility-Based Patrol.
 
-Incident location
+These results are based on our current campus layout and simulation settings.
 
-Priority
+### Multi-Agent Results
 
-Detection step
+We also evaluated the two-agent system over 10 trials.
 
-Resolution step
+| Metric | Average Result |
+|---|---:|
+| Total Campus Coverage | 44.44% |
+| Agent 1 Territory Coverage | 50.00% |
+| Agent 2 Territory Coverage | 40.00% |
+| Average Total Distance | 60.00 |
+| Average Battery Remaining | 70.00 |
+| Average Overlap Count | 0.00 |
 
-Response time
+The average overlap count was zero in the evaluated trials. Overall campus coverage was 44.44%, so there is still scope to improve the patrol coverage.
 
-Incident response time is measured in simulation patrol steps.
+## Technologies Used
 
-The utility-based agent considers active incidents when selecting its next destination.
+| Technology | Usage |
+|---|---|
+| Python | Main programming language |
+| NetworkX | Campus graph and shortest paths |
+| Streamlit | Web dashboard |
+| Plotly | Graphs and visualizations |
+| Pandas | Experiment results and data analysis |
+| Pytest | Testing |
+| Git and GitHub | Version control and repository hosting |
+| Render | Dashboard deployment |
 
-When an agent reaches an active incident location, the incident can be resolved by the simulation.
+## Project Structure
 
-8. Battery Management
-
-Battery management ensures that patrol agents operate within available energy constraints.
-
-The system supports:
-
-Battery capacity
-
-Initial battery charge
-
-Battery consumption
-
-Low-battery detection
-
-Charging station navigation
-
-Automatic recharging
-
-Movement consumes battery according to travel distance.
-
-If an agent does not have sufficient battery to complete a movement, that movement is prevented. Agents can return to the charging station to recharge.
-
-9. Explainable AI
-
-The system includes an explainability component to make autonomous decisions understandable.
-
-For each utility-based decision, the system can display:
-
-Selected destination
-
-Final utility score
-
-Security risk score
-
-Patrol coverage score
-
-Live alert score
-
-Revisit information
-
-Travel cost
-
-Battery cost
-
-Utility weights
-
-The dashboard also presents human-readable explanations describing why a particular destination was selected.
-
-This improves transparency and helps users understand the factors influencing autonomous patrol decisions.
-
-10. Multi-Agent Coordination
-
-The project extends single-agent patrol into a two-agent coordinated system.
-
-Two utility-based agents are used:
-
-Agent
-
-Starting Location
-
-Agent 1
-
-Main Gate
-
-Agent 2
-
-Security Office
-
-The campus is divided into territories, and each agent prioritizes locations assigned to its territory.
-
-The multi-agent system tracks:
-
-Individual territory coverage
-
-Total campus coverage
-
-Visited locations
-
-Patrol distance
-
-Battery consumption
-
-Overlapping locations
-
-The coordination mechanism also attempts to prevent both agents from selecting the same destination.
-
-11. Experimental Evaluation
-
-The project evaluates patrol performance using repeated simulation trials.
-
-Experimental configuration
-
-Parameter
-
-Configuration
-
-Patrol strategies
-
-3
-
-Trials per strategy
-
-10
-
-Steps per trial
-
-10
-
-Campus locations
-
-9
-
-Multi-agent trials
-
-10
-
-Evaluation metrics
-
-Average patrol distance
-
-Average unique campus areas visited
-
-Average total visits
-
-Average final battery
-
-Campus coverage percentage
-
-Individual territory coverage
-
-Average overlap count
-
-11.1 Patrol Strategy Comparison
-
-The following table presents the measured average results from the 10-trial evaluation.
-
-Metric
-
-Random Patrol
-
-Fixed Route
-
-Utility-Based
-
-Average Distance
-
-62.30
-
-30.00
-
-50.00
-
-Average Unique Areas
-
-6.70
-
-7.00
-
-6.00
-
-Average Total Visits
-
-10.00
-
-10.00
-
-10.00
-
-Average Final Battery
-
-37.70
-
-70.00
-
-50.00
-
-Campus Coverage
-
-74.44%
-
-77.78%
-
-66.67%
-
-Campus coverage is calculated as:
-
-[
-\text{Coverage}=\frac{\text{Average Unique Areas Visited}}{9}\times100
-]
-
-11.2 Experimental Result Charts
-
-Average Patrol Distance
-
-
-
-Average Unique Areas Covered
-
-
-
-Average Final Battery
-
-
-
-11.3 Result Analysis
-
-The experimental results show that:
-
-Fixed Route Patrol achieved the lowest average travel distance of 30.00.
-
-Fixed Route Patrol also achieved the highest average number of unique areas visited, at 7.00.
-
-Fixed Route Patrol retained the highest average final battery of 70.00.
-
-Utility-Based Patrol achieved a lower average distance and higher remaining battery than Random Patrol.
-
-Random Patrol achieved 6.70 unique areas, compared with 6.00 for Utility-Based Patrol.
-
-Under the current simulation configuration, Fixed Route Patrol performed best across the three reported comparison metrics.
-
-Utility-Based Patrol demonstrates adaptive decision-making capabilities, particularly through its consideration of risk, alerts, coverage, and resource constraints. However, these results do not establish it as the overall best-performing strategy.
-
-11.4 Multi-Agent Evaluation
-
-The two-agent patrol system was evaluated over 10 simulation trials.
-
-Metric
-
-Average Result
-
-Total Campus Coverage
-
-44.44%
-
-Agent 1 Territory Coverage
-
-50.00%
-
-Agent 2 Territory Coverage
-
-40.00%
-
-Average Total Distance
-
-60.00
-
-Average Battery Remaining
-
-70.00
-
-Average Overlap Count
-
-0.00
-
-The results demonstrate territory-based patrol coordination with zero average overlapping locations in the evaluated trials.
-
-The total campus coverage of 44.44% also indicates that further improvements are needed to increase overall campus coverage.
-
-11.5 Result Files
-
-Experimental data and summary files are available in the results/ directory.
-
-File
-
-Description
-
-patrol_results.csv
-
-Individual patrol evaluation results
-
-multi_agent_results.csv
-
-Individual multi-agent evaluation results
-
-patrol_summary.csv
-
-Aggregated patrol strategy comparison
-
-multi_agent_summary.csv
-
-Aggregated multi-agent evaluation
-
-12. Interactive Dashboard
-
-The project includes an interactive dashboard developed using Streamlit.
-
-Live Dashboard:
-https://autonomous-campus-security.onrender.com/
-
-The dashboard provides:
-
-System Monitoring
-
-Current agent location
-
-Battery level
-
-Patrol distance
-
-Patrol steps
-
-Active security alerts
-
-Campus Visualization
-
-Campus locations
-
-Campus paths
-
-Current agent position
-
-Patrol history
-
-Incident Monitoring
-
-Active incidents
-
-Incident priorities
-
-Incident response status
-
-Incident response time
-
-AI Decision Analysis
-
-Utility scores
-
-Selected destination
-
-Decision factors
-
-Explainability information
-
-Strategy Comparison
-
-Random Patrol
-
-Fixed Route Patrol
-
-Utility-Based Patrol
-
-Average distance
-
-Average unique areas covered
-
-Average final battery
-
-Multi-Agent Analysis
-
-Total campus coverage
-
-Agent-specific territory coverage
-
-Average patrol distance
-
-Average battery remaining
-
-Average overlap
-
-13. Dashboard Screenshots
-
-The following screenshots demonstrate the implemented dashboard and its main features.
-
-Dashboard Overview
-
-
-
-Campus Map
-
-
-
-Command Center
-
-
-
-Incident Monitoring
-
-
-
-Multi-Agent Command Center
-
-
-
-Additional Command Center Views
-
-
-
-
-
-14. Technologies Used
-
-Technology
-
-Purpose
-
-Python
-
-Core application development
-
-NetworkX
-
-Campus graph and shortest-path calculations
-
-Streamlit
-
-Interactive dashboard
-
-Plotly
-
-Interactive data visualization
-
-Pandas
-
-Experimental data processing
-
-Pytest
-
-Automated testing
-
-Git
-
-Version control
-
-GitHub
-
-Source-code hosting
-
-Render
-
-Dashboard deployment
-
-15. Project Structure
-
+```text
 Autonomous_Campus_Security/
 │
 ├── src/
@@ -756,278 +269,140 @@ Autonomous_Campus_Security/
 │   └── test_project.py
 │
 ├── screenshots/
-│   ├── dashboard.png
-│   ├── map.png
-│   ├── commandcenter2.png
-│   ├── incidentcenter.png
-│   └── multiagent command centre.png
 │
 ├── docs/
 │   └── images/
-│       ├── patrol_distance.png
-│       ├── unique_areas.png
-│       └── final_battery.png
 │
 ├── requirements.txt
 ├── README.md
 └── .gitignore
+```
 
-16. Installation and Setup
+## Installation and Running
 
-Prerequisites
+### 1. Clone the repository
 
-Python 3.10 or later recommended
-
-Git
-
-Internet connection for installing dependencies
-
-Step 1: Clone the repository
-
+```bash
 git clone https://github.com/kodumurinagasaivignesh/Autonomous_Campus_Security.git
+```
 
-Step 2: Navigate to the project directory
+### 2. Open the project folder
 
+```bash
 cd Autonomous_Campus_Security
+```
 
-Step 3: Create a virtual environment
+### 3. Create a virtual environment
 
+```bash
 python -m venv venv
+```
 
-Step 4: Activate the virtual environment
+### 4. Activate it (Windows PowerShell)
 
-Windows PowerShell:
-
+```powershell
 venv\Scripts\Activate.ps1
+```
 
-Step 5: Install dependencies
+### 5. Install the required packages
 
+```bash
 pip install -r requirements.txt
+```
 
-17. Running the Project
+### 6. Start the dashboard
 
-Launch the dashboard
-
+```bash
 streamlit run dashboard/app.py
+```
 
-Open the local dashboard in your browser:
+Open the following address in your browser:
 
+```text
 http://localhost:8501
+```
 
-Run the utility-based patrol agent
+## Running Experiments
 
-python src/utility_agent.py
+To evaluate the patrol strategies:
 
-Run the multi-agent patrol system
-
-python src/multi_agent.py
-
-Run patrol strategy evaluation
-
+```bash
 python experiments/evaluate_patrol.py
+```
 
-Run multi-agent evaluation
+To evaluate the multi-agent system:
 
+```bash
 python experiments/evaluate_multi_agent.py
+```
 
-Analyze experimental results
+To analyze the results:
 
+```bash
 python experiments/analyze_results.py
+```
 
-Generate comparison charts
+To generate the comparison charts:
 
+```bash
 python experiments/plot_results.py
+```
 
-18. Automated Testing
+## Testing
 
-The project uses Pytest for automated testing.
+We used Pytest to check the main project components.
 
-The test suite covers major system components, including:
+Run:
 
-Campus environment
-
-Battery management
-
-Security agent
-
-Incident management
-
-Utility-based agent
-
-Multi-agent coordination
-
-Incident response metrics
-
-Complete patrol functionality
-
-Run the test suite:
-
+```bash
 pytest -q
+```
 
-Verified test result:
+**Latest verified result:**
 
+```text
 21 passed
+```
 
-All 21 tests passed in the completed project test run.
+## Limitations
 
-19. Responsible AI Considerations
+A few things to keep in mind about the current implementation:
 
-The project considers important responsible AI principles.
+- The campus is simulated rather than a real campus map.
+- Incidents and risk values are predefined.
+- Real CCTV cameras and physical sensors are not connected.
+- Battery consumption is simplified.
+- The agents operate inside the simulation and do not control physical robots.
+- Multi-agent communication is simulated.
 
-Explainability
+## Future Improvements
 
-The system provides human-readable explanations for utility-based destination selection.
+Some features that can be added later:
 
-Transparency
+- Real-time CCTV and sensor integration.
+- Computer vision for incident detection.
+- Real campus map integration.
+- Better multi-agent coordination.
+- Reinforcement learning for patrol optimization.
+- Real-time notifications.
+- Integration with physical patrol robots.
 
-Utility factors and their weights are documented and visible.
+## Team Members
 
-Human Oversight
+**Group 13 – CSE276**
 
-The project is designed as an academic decision-support prototype, not a replacement for human security personnel.
+- Kodumuri Naga Sai Vignesh
+- Dhruv Choudhary
+- Nandavarapu Mohan Venkat Maniram
 
-Privacy
+**Lovely Professional University**
 
-The current simulation does not process real CCTV footage, biometric information, or personal data.
+**Course:** CSE276 – Artificial Intelligence Foundations
 
-Safety
+**Project:** Autonomous Patrol & Surveillance Agent for Campus Security
 
-The prototype operates in a simulated campus environment and does not directly control physical security infrastructure.
+**Academic Session:** 2026–27
 
-20. Limitations
+---
 
-The current implementation has the following limitations:
-
-The campus environment is simulated.
-
-Security risk values are predefined.
-
-Security incidents are simulated.
-
-Battery consumption is simplified.
-
-Patrol movement occurs in discrete simulation steps.
-
-Real camera and sensor feeds are not connected.
-
-Multi-agent communication is simulated.
-
-The system has not been deployed on a physical robot.
-
-Experimental results depend on the configured campus environment and simulation settings.
-
-The current evaluation does not establish performance under all possible real-world security conditions.
-
-Therefore, this project should be considered an academic and research prototype rather than a production-ready campus security system.
-
-21. Future Improvements
-
-Potential future improvements include:
-
-Real campus map integration
-
-GPS and indoor localization
-
-Computer vision-based incident detection
-
-CCTV integration with appropriate privacy safeguards
-
-Real-time sensor streams
-
-Dynamic security risk prediction
-
-Reinforcement learning for patrol optimization
-
-Advanced multi-agent coordination
-
-Physical autonomous robot integration
-
-Real-time security notifications
-
-Edge AI deployment
-
-Privacy-preserving surveillance
-
-Human-in-the-loop decision-making
-
-Fail-safe mechanisms
-
-22. Project Outcomes
-
-The completed project demonstrates an end-to-end simulated autonomous campus security patrol system capable of:
-
-Modeling a campus using a weighted graph.
-
-Implementing multiple autonomous patrol strategies.
-
-Selecting destinations using utility-based decision-making.
-
-Simulating and responding to security incidents.
-
-Managing battery constraints and charging.
-
-Explaining autonomous agent decisions.
-
-Coordinating two patrol agents using territory-based patrol.
-
-Comparing performance through repeated experiments.
-
-Visualizing patrol operations through an interactive dashboard.
-
-Validating core functionality through automated tests.
-
-23. Team Information
-
-Group 13
-
-Team Member
-
-Kodumuri Naga Sai Vignesh
-
-Dhruv Choudhary
-
-Nandavarapu Mohan Venkat Maniram
-
-Academic Information
-
-Detail
-
-Information
-
-Institution
-
-Lovely Professional University
-
-Course
-
-CSE276 – Artificial Intelligence Foundations
-
-Project Title
-
-Autonomous Patrol & Surveillance Agent for Campus Security
-
-Group
-
-13
-
-Academic Session
-
-2026–27
-
-24. Repository and Deployment
-
-GitHub Repository:
-https://github.com/kodumurinagasaivignesh/Autonomous_Campus_Security
-
-Live Dashboard:
-https://autonomous-campus-security.onrender.com/
-
-25. License
-
-This project is developed for academic and educational purposes.
-
-<p align="center">
-  <strong>Autonomous Patrol & Surveillance Agent for Campus Security</strong><br>
-  Group 13 | CSE276 – Artificial Intelligence Foundations<br>
-  Lovely Professional University | 2026–27
-</p>
+This project was developed as part of our academic work to explore autonomous agents, AI decision-making and multi-agent systems for campus security.
